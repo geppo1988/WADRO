@@ -64,7 +64,8 @@ class FindObject {
 		JLabel lbl2=new JLabel();
 		jframe2.setLayout(new FlowLayout()); 
 
-		Mat img_object = Imgcodecs.imread("C:\\Users\\d.dandrea\\Desktop\\WadroWorkspace\\img\\logo.jpg", Imgcodecs.IMREAD_GRAYSCALE);
+		System.out.println(System.getProperty("user.dir"));
+		Mat img_object = Imgcodecs.imread(System.getProperty("user.dir")+"/images/logo.jpg", Imgcodecs.IMREAD_GRAYSCALE);
 
 		while(true){
 			camera.read(currFrame);
