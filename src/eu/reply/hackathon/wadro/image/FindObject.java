@@ -3,6 +3,8 @@ import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -94,24 +96,27 @@ class FindObject {
 
 
 		FeatureDetector detector = FeatureDetector.create(FeatureDetector.ORB); //4 = SURF 
+		DescriptorExtractor extractor = DescriptorExtractor.create(DescriptorExtractor.ORB); //2 = SURF;
 
+		
+		
 		MatOfKeyPoint keypoints_object = new MatOfKeyPoint();
 		MatOfKeyPoint keypoints_scene  = new MatOfKeyPoint();
 
-		detector.detect(img_object, keypoints_object);
-		detector.detect(img_scene, keypoints_scene);
-
-		DescriptorExtractor extractor = DescriptorExtractor.create(DescriptorExtractor.ORB); //2 = SURF;
-
 		Mat descriptor_object = new Mat();
-		Mat descriptor_scene = new Mat() ;
-
+		detector.detect(img_object, keypoints_object);
 		extractor.compute(img_object, keypoints_object, descriptor_object);
+
+		Mat descriptor_scene = new Mat() ;
+		detector.detect(img_scene, keypoints_scene);
 		extractor.compute(img_scene, keypoints_scene, descriptor_scene);
 
+
+
+
 		
 		
-		DescriptorMatcher matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE); // 1 = FLANNBASED
+		DescriptorMatcher matcher = DescriptorMatcher.create(DescriptorMatcher.BRUTEFORCE_HAMMINGLUT); // 1 = FLANNBASED
 		MatOfDMatch matches = new MatOfDMatch();
 
 		Mat img_matches = new Mat();
@@ -127,7 +132,9 @@ class FindObject {
 			//System.out.println(matchesList.toString());
 			Double max_dist = 0.0;
 			Double min_dist = 100.0;
-
+			
+			
+			
 			for(int i = 0; i < descriptor_object.rows(); i++){
 				if(matchesList.size()>0){
 					Double dist = (double) matchesList.get(i).distance;
@@ -143,12 +150,28 @@ class FindObject {
 			MatOfDMatch gm = new MatOfDMatch();
 
 			for(int i = 0; i < descriptor_object.rows(); i++){
-				if(matchesList.size()>0 && matchesList.get(i).distance < 2.5*min_dist){
+				if(matchesList.size()>0 && matchesList.get(i).distance <=2*min_dist){
 					good_matches.addLast(matchesList.get(i));
 				}
 			}
-			if(good_matches.size()>5)
-				gm.fromList(good_matches);
+			System.out.println("FOUNDED: "+good_matches.size()+ " GOOD MATCHES");
+			
+			Collections.sort(good_matches,new Comparator<DMatch>() {
+		        @Override
+		        public int compare(DMatch o1, DMatch o2) {
+		            if(o1.distance<o2.distance)
+		                return -1;
+		            if(o1.distance>o2.distance)
+		                return 1;
+		            return 0;
+		        }
+		    });
+		    if(good_matches.size()>20){
+		    	gm.fromList(good_matches.subList(0, 20));
+		    }
+		    else gm.fromList(good_matches);
+			//if(good_matches.size()>5)
+			//	gm.fromList(good_matches);
 
 			Features2d.drawMatches(
 					img_object,
@@ -169,6 +192,7 @@ class FindObject {
 			List<KeyPoint> keypoints_sceneList = keypoints_scene.toList();
 
 			for(int i = 0; i<good_matches.size(); i++){
+				
 				objList.addLast(keypoints_objectList.get(good_matches.get(i).queryIdx).pt);
 				sceneList.addLast(keypoints_sceneList.get(good_matches.get(i).trainIdx).pt);
 			}
@@ -181,7 +205,7 @@ class FindObject {
 
 			Mat h=new Mat();
 			if (good_matches.size()>0){
-				h = Calib3d.findHomography(obj, scene, Calib3d.LMEDS, min_dist);
+				h = Calib3d.findHomography(obj, scene, Calib3d.RANSAC, min_dist);
 				System.out.println("HOMOGRAFY");
 				if(h.width()==3){
 					System.out.println("HHH "+h.width());
