@@ -15,5 +15,6 @@
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.7.12.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-android-1.7.12.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-ext-1.7.12.jar"/>
+	<classpathentry kind="lib" path="C:/Users/d.dandrea/Desktop/WadroWorkspace/lib_old/javadrone-api-1.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
